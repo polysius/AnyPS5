@@ -33,7 +33,13 @@ jobs:
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
           NIR_DEBUG: print_cs
-        run: (./build/tests/agc_driver_bda_device_tests > nir.txt 2>&1 || echo "exit $?"); wc -l nir.txt; grep -n "case address" nir.txt; true
+        run: |
+          (./build/tests/agc_driver_bda_device_tests > nir.txt 2>&1 || echo "exit $?")
+          awk '/case address=0x7fff12340002 bits=32/{p=1} /case address=0x7fff12340006/{p=0} p' nir.txt > case3.txt
+          wc -l nir.txt case3.txt
+          grep -c "^shader: MESA_SHADER_COMPUTE" case3.txt || true
+          awk '/^shader: MESA_SHADER_COMPUTE/{buf=""} {buf=buf $0 "
+"} END{printf "%s", buf}' case3.txt | head -n 2500
       - uses: actions/upload-artifact@v4
         if: always()
         with:
