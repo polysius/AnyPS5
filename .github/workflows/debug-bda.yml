@@ -1,7 +1,8 @@
 name: Debug BDA
 
 on:
-  workflow_dispatch:
+  push:
+    branches: ["debug/**"]
 
 jobs:
   bda:
