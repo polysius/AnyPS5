@@ -15,15 +15,16 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libvulkan1 mesa-vulkan-drivers ninja-build gdb
       - run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
       - run: cmake --build build --target agc_driver_bda_device_tests
+      - run: dpkg -l mesa-vulkan-drivers libvulkan1 | tail -2; ls /usr/share/vulkan/icd.d
       - name: Default
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
-        run: ./build/tests/agc_driver_bda_device_tests; echo "exit $?"
+        run: ./build/tests/agc_driver_bda_device_tests || echo "exit $?"
       - name: Byte reads forced
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
           APS5_BDA_BYTE_READS: 1
-        run: ./build/tests/agc_driver_bda_device_tests; echo "exit $?"
+        run: ./build/tests/agc_driver_bda_device_tests || echo "exit $?"
       - name: Backtrace
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
@@ -32,7 +33,7 @@ jobs:
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
           NIR_DEBUG: print_cs
-        run: ./build/tests/agc_driver_bda_device_tests > nir.txt 2>&1; echo "exit $?"; wc -l nir.txt; tail -n 600 nir.txt
+        run: (./build/tests/agc_driver_bda_device_tests > nir.txt 2>&1 || echo "exit $?"); wc -l nir.txt; grep -n "case address" nir.txt; true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
