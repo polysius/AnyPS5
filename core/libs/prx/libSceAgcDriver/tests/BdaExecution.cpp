@@ -121,6 +121,8 @@ void RunBdaExecutionTests(const Context& context) {
         std::uint32_t result = 0;
         std::memcpy(&report, fault.Bytes().data(), sizeof(report));
         std::memcpy(&result, output.Bytes().data(), sizeof(result));
+        std::fprintf(stderr, "  result=0x%08x fault state=%u reason=%u\n", result, static_cast<unsigned>(report.state), static_cast<unsigned>(report.reason));
+        std::fflush(stderr);
         if (static_cast<std::uint32_t>(reason) == 0) {
             Require(report.state == Abi::FaultState::Empty && result == expected, "BDA GPU read produced incorrect data or a fault");
         } else {

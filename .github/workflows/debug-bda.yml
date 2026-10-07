@@ -20,31 +20,21 @@ jobs:
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
         run: ./build/tests/agc_driver_bda_device_tests || echo "exit $?"
-      - name: Variant APS5_DBG_PROBE_ZERO
+      - name: Variant APS5_DBG_OUTPUT_PROBE
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
-          APS5_DBG_PROBE_ZERO: 1
-        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
-      - name: Variant APS5_DBG_NO_STOP
+          APS5_DBG_OUTPUT_PROBE: 1
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E -A3 "bits=32" || echo "exit $?"
+      - name: Variant APS5_DBG_OPAQUE_ZERO
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
-          APS5_DBG_NO_STOP: 1
-        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
-      - name: Variant APS5_DBG_VOLATILE_WIDE
-        env:
-          GALLIUM_OVERRIDE_CPU_CAPS: avx
-          APS5_DBG_VOLATILE_WIDE: 1
-        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
+          APS5_DBG_OPAQUE_ZERO: 1
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E -A3 "bits=32" || echo "exit $?"
       - name: Variant APS5_DBG_NO_WIDE
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
           APS5_DBG_NO_WIDE: 1
-        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
-      - name: Byte reads forced
-        env:
-          GALLIUM_OVERRIDE_CPU_CAPS: avx
-          APS5_BDA_BYTE_READS: 1
-        run: ./build/tests/agc_driver_bda_device_tests || echo "exit $?"
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E -A3 "bits=32" || echo "exit $?"
       - name: Backtrace
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx

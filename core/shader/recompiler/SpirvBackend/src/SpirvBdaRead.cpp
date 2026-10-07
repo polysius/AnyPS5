@@ -258,7 +258,12 @@ std::array<std::uint32_t, 4> EmitBdaDwordReads(SpirvValueEmitContext& ctx, const
     if (std::getenv("APS5_DBG_NO_STOP") != nullptr) state.bdaStopsInvocations = false;
     const auto probed = state.module.AllocateId();
     state.module.AddFunction(spv::OpFunctionCall, u64, probed, state.bdaProbeFunction, addresses[first], ConstantU32(state, (last - first + 1u) * 4u), instruction);
-    const auto physical = std::getenv("APS5_DBG_PROBE_ZERO") != nullptr ? BdaConstant(state, 0u) : probed;
+    if (std::getenv("APS5_DBG_OUTPUT_PROBE") != nullptr) {
+        values[first] = Binary(state, spv::OpBitwiseOr, TypeU32(state), Unary(state, spv::OpUConvert, TypeU32(state), probed), Unary(state, spv::OpUConvert, TypeU32(state), Binary(state, spv::OpShiftRightLogical, u64, probed, BdaConstant(state, 32u))));
+        return values;
+    }
+    const auto opaqueZero = Unary(state, spv::OpUConvert, u64, BdaLoadWord(state, ConstantU32(state, 3u)));
+    const auto physical = std::getenv("APS5_DBG_PROBE_ZERO") != nullptr ? BdaConstant(state, 0u) : std::getenv("APS5_DBG_OPAQUE_ZERO") != nullptr ? Binary(state, spv::OpBitwiseAnd, u64, probed, opaqueZero) : probed;
     const auto mapped = Binary(state, spv::OpINotEqual, TypeBool(state), physical, BdaConstant(state, 0u));
     const auto aligned = Binary(state, spv::OpIEqual, TypeBool(state), Binary(state, spv::OpBitwiseAnd, u64, physical, BdaConstant(state, 3u)), BdaConstant(state, 0u));
     const auto wide = Binary(state, spv::OpLogicalAnd, TypeBool(state), mapped, aligned);
