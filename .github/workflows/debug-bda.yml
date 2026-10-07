@@ -20,6 +20,26 @@ jobs:
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
         run: ./build/tests/agc_driver_bda_device_tests || echo "exit $?"
+      - name: Variant APS5_DBG_PROBE_ZERO
+        env:
+          GALLIUM_OVERRIDE_CPU_CAPS: avx
+          APS5_DBG_PROBE_ZERO: 1
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
+      - name: Variant APS5_DBG_NO_STOP
+        env:
+          GALLIUM_OVERRIDE_CPU_CAPS: avx
+          APS5_DBG_NO_STOP: 1
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
+      - name: Variant APS5_DBG_VOLATILE_WIDE
+        env:
+          GALLIUM_OVERRIDE_CPU_CAPS: avx
+          APS5_DBG_VOLATILE_WIDE: 1
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
+      - name: Variant APS5_DBG_NO_WIDE
+        env:
+          GALLIUM_OVERRIDE_CPU_CAPS: avx
+          APS5_DBG_NO_WIDE: 1
+        run: ./build/tests/agc_driver_bda_device_tests 2>&1 | grep -E "bits=32|passed|failed|incorrect|not published|substitute" || echo "exit $?"
       - name: Byte reads forced
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
@@ -29,19 +49,3 @@ jobs:
         env:
           GALLIUM_OVERRIDE_CPU_CAPS: avx
         run: gdb -batch -ex run -ex bt -ex 'info registers' -ex 'x/16i $pc-32' ./build/tests/agc_driver_bda_device_tests 2>&1 | tail -n 80; true
-      - name: NIR
-        env:
-          GALLIUM_OVERRIDE_CPU_CAPS: avx
-          NIR_DEBUG: print_cs
-        run: |
-          (./build/tests/agc_driver_bda_device_tests > nir.txt 2>&1 || echo "exit $?")
-          awk '/case address=0x7fff12340002 bits=32/{p=1} /case address=0x7fff12340006/{p=0} p' nir.txt > case3.txt
-          wc -l nir.txt case3.txt
-          grep -c "^shader: MESA_SHADER_COMPUTE" case3.txt || true
-          last=$(grep -n "^shader: MESA_SHADER_COMPUTE" case3.txt | tail -n 1 | cut -d: -f1)
-          tail -n +"${last:-1}" case3.txt | head -n 2500
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: nir
-          path: nir.txt

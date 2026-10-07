@@ -255,8 +255,10 @@ std::array<std::uint32_t, 4> EmitBdaDwordReads(SpirvValueEmitContext& ctx, const
         readBytes(values);
         return values;
     }
-    const auto physical = state.module.AllocateId();
-    state.module.AddFunction(spv::OpFunctionCall, u64, physical, state.bdaProbeFunction, addresses[first], ConstantU32(state, (last - first + 1u) * 4u), instruction);
+    if (std::getenv("APS5_DBG_NO_STOP") != nullptr) state.bdaStopsInvocations = false;
+    const auto probed = state.module.AllocateId();
+    state.module.AddFunction(spv::OpFunctionCall, u64, probed, state.bdaProbeFunction, addresses[first], ConstantU32(state, (last - first + 1u) * 4u), instruction);
+    const auto physical = std::getenv("APS5_DBG_PROBE_ZERO") != nullptr ? BdaConstant(state, 0u) : probed;
     const auto mapped = Binary(state, spv::OpINotEqual, TypeBool(state), physical, BdaConstant(state, 0u));
     const auto aligned = Binary(state, spv::OpIEqual, TypeBool(state), Binary(state, spv::OpBitwiseAnd, u64, physical, BdaConstant(state, 3u)), BdaConstant(state, 0u));
     const auto wide = Binary(state, spv::OpLogicalAnd, TypeBool(state), mapped, aligned);
@@ -270,11 +272,16 @@ std::array<std::uint32_t, 4> EmitBdaDwordReads(SpirvValueEmitContext& ctx, const
     std::array<std::uint32_t, 4> wideValues{};
     for (std::uint32_t dword = first; dword <= last; ++dword) {
         if (!isUsed(dword)) continue;
+        if (std::getenv("APS5_DBG_NO_WIDE") != nullptr) {
+            wideValues[dword] = Binary(state, spv::OpIAdd, TypeU32(state), ConstantU32(state, 0u), ConstantU32(state, 0u));
+            continue;
+        }
         const auto element = dword == first ? physical : Binary(state, spv::OpIAdd, u64, physical, BdaConstant(state, (dword - first) * 4u));
         const auto pointer = state.module.AllocateId();
         state.module.AddFunction(spv::OpConvertUToPtr, TypePhysicalU32Pointer(state), pointer, element);
         wideValues[dword] = state.module.AllocateId();
-        state.module.AddFunction(spv::OpLoad, TypeU32(state), wideValues[dword], pointer, BdaAccessMask(state, inst), 4u);
+        const auto wideMask = BdaAccessMask(state, inst) | (std::getenv("APS5_DBG_VOLATILE_WIDE") != nullptr ? spv::MemoryAccessVolatileMask : 0u);
+        state.module.AddFunction(spv::OpLoad, TypeU32(state), wideValues[dword], pointer, wideMask, 4u);
     }
     state.module.AddFunction(spv::OpBranch, merge);
     EmitLabel(state, byteLabel);
