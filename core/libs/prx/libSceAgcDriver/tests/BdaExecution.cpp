@@ -109,16 +109,13 @@ void RunBdaExecutionTests(const Context& context) {
         std::memset(fault.Bytes().data(), 0, fault.Bytes().size());
         const std::uint32_t sentinel = 0xdeadbeef;
         std::memcpy(output.Bytes().data(), &sentinel, sizeof(sentinel));
-        std::fprintf(stderr, "case address=0x%llx bits=%u offset=%lld groups=%u
-", static_cast<unsigned long long>(address), bits, static_cast<long long>(offset), groups);
+        std::fprintf(stderr, "case address=0x%llx bits=%u offset=%lld groups=%u\n", static_cast<unsigned long long>(address), bits, static_cast<long long>(offset), groups);
         std::fflush(stderr);
         Pipeline pipeline(context, MakeBdaTestShader(address, bits, offset), {&table, &fault, &output});
-        std::fprintf(stderr, "  pipeline created
-");
+        std::fprintf(stderr, "  pipeline created\n");
         std::fflush(stderr);
         pipeline.Run(groups);
-        std::fprintf(stderr, "  ran
-");
+        std::fprintf(stderr, "  ran\n");
         std::fflush(stderr);
         Abi::Fault report{};
         std::uint32_t result = 0;
